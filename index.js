@@ -1,4 +1,5 @@
 const fs = require('fs');
+const statik = require('node-static');
 const http = require('http');
 const path = require('path');
 const WebSocket = require('ws');
@@ -40,6 +41,10 @@ Note that <cwd> is very important for both commands.`);
 
 pid.startup(pidFile);
 
+const fileServer = new statik.Server(path.join(__dirname, 'public'), {
+  indexFile: null,
+});
+
 const serveFile = (fn, mime, res) => {
   fs.readFile(fn, (err, data) => {
     if (err) {
@@ -55,18 +60,12 @@ const serveFile = (fn, mime, res) => {
 };
 
 const server = http.createServer((req, res) => {
-  switch (req.url) {
-    case '/':
-      serveFile(path.join(__dirname, 'index.html'), 'text/html', res);
-      break;
-    case '/pdf':
+  req.addListener('end', () => {
+    if (req.url === '/pdf')
       serveFile(pdfFile, 'application/pdf', res);
-      break;
-    default:
-      res.writeHead(404);
-      res.end();
-      return;
-  }
+    else
+      fileServer.serve(req, res);
+  }).resume();
 });
 
 const wss = new WebSocketServer({

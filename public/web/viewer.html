@@ -427,5 +427,11 @@ See https://github.com/adobe-type-tools/cmap-resources
     <div id="printContainer"></div>
 
     <input type="file" id="fileInput" class="hidden">
+    <script>
+      const socket = new WebSocket(`ws://${window.location.host}/socket`);
+      socket.onmessage = (e) => {
+        PDFViewerApplication.open(PDFViewerApplication.url);
+      };
+    </script>
   </body>
 </html>

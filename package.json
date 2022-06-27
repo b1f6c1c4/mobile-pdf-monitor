@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/b1f6c1c4/mobile-pdf-monitor#readme",
   "dependencies": {
+    "node-static": "^0.7.11",
     "ws": "^8.8.0"
   }
 }
