@@ -16,6 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
+ *     Changed the default pdf name
+ *
  * @licend The above is the entire license notice for the
  * JavaScript code in this page
  */

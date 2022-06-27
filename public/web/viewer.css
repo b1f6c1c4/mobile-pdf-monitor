@@ -11,6 +11,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
+ *     Prevented body from scrolling
  */
 
 .textLayer {
