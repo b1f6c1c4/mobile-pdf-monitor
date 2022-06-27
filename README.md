@@ -1,11 +1,11 @@
-# Mobile PDF Monitor
+# pdfmon
 
 > Lightweight web server for easily monitor PDF changes on mobile device
 
 ## Install
 
 ```bash
-npm i -g mobile-pdf-monitor
+npm i -g pdfmon
 ```
 
 ## Canonical Usage

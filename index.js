@@ -19,7 +19,7 @@ const { spawn, fork } = require('node:child_process');
 const { quote } = require('shell-quote');
 const pid = require('./pid');
 
-const pidFile = '.mobile-pdf-monitor.pid';
+const pidFile = '.pdfmon.pid';
 
 const sendSignal = (signal) => {
   const p = pid.getCurrentPID(pidFile);

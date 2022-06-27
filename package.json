@@ -1,14 +1,14 @@
 {
-  "name": "mobile-pdf-monitor",
+  "name": "pdfmon",
   "version": "0.0.0",
   "description": "Lightweight web server for easily monitor PDF changes on mobile device",
   "main": "index.js",
   "bin": {
-    "hub-sync": "./bin/hub-sync.js"
+    "pdfmon": "./bin/pdfmon.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/b1f6c1c4/mobile-pdf-monitor.git"
+    "url": "git+ssh://git@github.com/b1f6c1c4/pdfmon.git"
   },
   "keywords": [
     "pdf",
@@ -18,9 +18,9 @@
   "author": "b1f6c1c4 <b1f6c1c4@gmail.com>",
   "license": "APACHE-2.0",
   "bugs": {
-    "url": "https://github.com/b1f6c1c4/mobile-pdf-monitor/issues"
+    "url": "https://github.com/b1f6c1c4/pdfmon/issues"
   },
-  "homepage": "https://github.com/b1f6c1c4/mobile-pdf-monitor#readme",
+  "homepage": "https://github.com/b1f6c1c4/pdfmon#readme",
   "dependencies": {
     "node-static": "^0.7.11",
     "shell-quote": "^1.7.3",
