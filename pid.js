@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
+const fs = require('node:fs');
 
 const getCurrentPID = (fn) => {
   if (!fs.existsSync(fn))
@@ -59,15 +59,17 @@ const writePID = (fn) => {
 
 module.exports = {
   getCurrentPID,
-  startup: (fn) => {
+  removePID,
+  writePID,
+  cleanup: (fn) => {
     const pid = getCurrentPID(fn);
     if (pid) {
       if (isProcessExist(pid)) {
         console.error(`Fatal: Another program (PID ${pid}) is STILL RUNNING!`);
         process.exit(2);
       }
+      console.error(`Notice: Obselete PID file detected, cleanning up`);
       removePID(fn);
     }
-    writePID(fn);
   },
 };

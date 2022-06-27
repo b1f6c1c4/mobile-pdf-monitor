@@ -13,95 +13,78 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
-const statik = require('node-static');
-const http = require('http');
-const path = require('path');
-const WebSocket = require('ws');
-const { WebSocketServer } = WebSocket;
+const fs = require('node:fs');
+const path = require('node:path');
+const { spawn } = require('node:child_process');
 const pid = require('./pid');
 
-const port = 8080;
-
-let pdfFile;
 const pidFile = '.mobile-pdf-monitor.pid';
 
-switch (process.argv.length) {
-  case 3:
-    pdfFile = process.argv[2];
-    break;
-  case 2:
-    const p = pid.getCurrentPID(pidFile);
-    if (p === null) {
-      console.error('Fatal: There is no PID file, please double check CWD:', process.cwd());
-      process.exit(2);
-    }
-    try {
-      process.kill(p, 'SIGUSR1');
-    } catch (err) {
-      console.error(`Fatal: Failed to send SIGUSR1 to program (PID ${p})`, err);
-      process.exit(2);
-    }
-    process.exit(0);
-    break;
-  default:
-    console.log(`Usage: To start a web server, run:
-    mobile-pdf-monitor <path-to-pdf>
-To trigger reload, run:
-    mobile-pdf-monitor
-
-Note that <cwd> is very important for both commands.`);
-    process.exit(1);
-}
-
-pid.startup(pidFile);
-
-const fileServer = new statik.Server(path.join(__dirname, 'public'), {
-  indexFile: null,
-});
-
-const serveFile = (fn, mime, res) => {
-  fs.readFile(fn, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end(JSON.stringify(err));
-      return;
-    }
-    res.writeHead(200, {
-      'Content-Type': mime,
-    });
-    res.end(data);
-  });
-};
-
-const server = http.createServer((req, res) => {
-  req.addListener('end', () => {
-    if (req.url === '/') {
-      res.writeHead(302, { Location: '/web/viewer.html' });
-      res.end();
-    } else if (req.url === '/pdf') {
-      serveFile(pdfFile, 'application/pdf', res);
+const sendSignal = (signal) => {
+  const p = pid.getCurrentPID(pidFile);
+  if (p === null) {
+    console.error('Fatal: There is no PID file, please double check CWD:', process.cwd());
+    process.exit(2);
+  }
+  try {
+    process.kill(p, signal);
+    console.log(`Info: Signal ${signal} sent to program (PID ${p})`);
+  } catch (err) {
+    if (err.code == 'ESRCH') {
+      console.error(`Notice: Obselete PID file detected, cleanning up`);
+      pid.removePID(pidFile);
     } else {
-      fileServer.serve(req, res);
+      console.error(`Fatal: Failed to send ${signal} to program (PID ${p})`, err);
+      process.exit(2);
     }
-  }).resume();
-});
-
-const wss = new WebSocketServer({
-  server,
-  path: '/socket',
-  perMessageDeflate: false,
-});
-
-const broadcast = () => {
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send();
-    }
-  });
+  }
 };
 
-process.on('SIGUSR1', broadcast);
+const launchDaemon = (pdfFile, port) => {
+  if (!fs.existsSync(pdfFile)) {
+    console.error(`Warning: File ${pdfFile} does not exist`);
+  }
+  pid.cleanup(pidFile);
 
-console.log(`Listening on ${port} for ${pdfFile}`);
-server.listen(port);
+  process.env.PDF_FILE = pdfFile;
+  process.env.PID_FILE = pidFile;
+  process.env.PORT = '' + port;
+  spawn(process.argv[0], [path.join(__dirname, 'daemon.js')], {
+    detected: true,
+    stdio: ['ignore', 'inherit', 'inherit']
+  }).unref();
+  console.log(`Launched web server on ${port} for ${pdfFile}`);
+};
+
+module.exports = () => {
+  switch (process.argv.length) {
+    case 4:
+      const pdfFile = process.argv[2];
+      const port = +process.argv[3];
+      launchDaemon(pdfFile, port);
+      break;
+    case 3:
+      if (process.argv[2] === 'stop') {
+        sendSignal('SIGTERM');
+      } else if (process.argv[2] === 'reload') {
+        sendSignal('SIGUSR1');
+      } else {
+        const pdfFile = process.argv[2];
+        const port = +process.env.PORT || 8080;
+        launchDaemon(pdfFile, port);
+      }
+      break;
+    default:
+      console.log(`Usage: To start a web server, run:
+    mobile-pdf-monitor <path-to-pdf> [<port:8080>]
+  Note that the web server forks and runs in background.
+To trigger reload, run:
+    mobile-pdf-monitor reload
+To quit daemon, run:
+    mobile-pdf-monitor stop
+
+Note that <cwd> is very important for ALL those commands.`);
+      process.exit(1);
+  }
+  setTimeout(() => {}, 50);
+};
