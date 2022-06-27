@@ -1,0 +1,27 @@
+{
+  "name": "mobile-pdf-monitor",
+  "version": "0.0.0",
+  "description": "Lightweight web server for easily monitor PDF changes on mobile device",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/b1f6c1c4/mobile-pdf-monitor.git"
+  },
+  "keywords": [
+    "pdf",
+    "hmr",
+    "latex"
+  ],
+  "author": "b1f6c1c4 <b1f6c1c4@gmail.com>",
+  "license": "APACHE-2.0",
+  "bugs": {
+    "url": "https://github.com/b1f6c1c4/mobile-pdf-monitor/issues"
+  },
+  "homepage": "https://github.com/b1f6c1c4/mobile-pdf-monitor#readme",
+  "dependencies": {
+    "ws": "^8.8.0"
+  }
+}

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mobile PDF Monitor</title>
+  </head>
+  <body>
+    <script>
+      const socket = new WebSocket(`ws://${window.location.host}/socket`);
+      socket.onmessage = (e) => {
+        window.location.reload();
+      };
+    </script>
+  </body>
+</html>
