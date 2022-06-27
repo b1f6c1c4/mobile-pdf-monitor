@@ -68,7 +68,8 @@ To quit daemon, run:
 To automatically run latexmk, run:
     pdfmon latexmk [<options>] <main.tex>
 
-Note that <cwd> is very important for ALL those commands.`);
+Note that <cwd> is very important for ALL those commands.
+Adjust listing port by environment variable PORT.`);
   process.exit(1);
 };
 
