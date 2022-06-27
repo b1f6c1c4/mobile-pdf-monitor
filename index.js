@@ -61,10 +61,14 @@ const serveFile = (fn, mime, res) => {
 
 const server = http.createServer((req, res) => {
   req.addListener('end', () => {
-    if (req.url === '/pdf')
+    if (req.url === '/') {
+      res.writeHead(302, { Location: '/web/viewer.html' });
+      res.end();
+    } else if (req.url === '/pdf') {
       serveFile(pdfFile, 'application/pdf', res);
-    else
+    } else {
       fileServer.serve(req, res);
+    }
   }).resume();
 });
 
