@@ -15,7 +15,8 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
+const { spawn, fork } = require('node:child_process');
+const { quote } = require('shell-quote');
 const pid = require('./pid');
 
 const pidFile = '.mobile-pdf-monitor.pid';
@@ -40,7 +41,7 @@ const sendSignal = (signal) => {
   }
 };
 
-const launchDaemon = (pdfFile, port) => {
+const launchDaemon = (pdfFile) => {
   if (!fs.existsSync(pdfFile)) {
     console.error(`Warning: File ${pdfFile} does not exist`);
   }
@@ -48,43 +49,80 @@ const launchDaemon = (pdfFile, port) => {
 
   process.env.PDF_FILE = pdfFile;
   process.env.PID_FILE = pidFile;
+  const port = +process.env.PORT || 8080;
   process.env.PORT = '' + port;
-  spawn(process.argv[0], [path.join(__dirname, 'daemon.js')], {
-    detected: true,
-    stdio: ['ignore', 'inherit', 'inherit']
+  fork(path.join(__dirname, 'daemon.js'), [], {
+    detached: true,
   }).unref();
   console.log(`Launched web server on ${port} for ${pdfFile}`);
 };
 
-module.exports = () => {
-  switch (process.argv.length) {
-    case 4:
-      const pdfFile = process.argv[2];
-      const port = +process.argv[3];
-      launchDaemon(pdfFile, port);
-      break;
-    case 3:
-      if (process.argv[2] === 'stop') {
-        sendSignal('SIGTERM');
-      } else if (process.argv[2] === 'reload') {
-        sendSignal('SIGUSR1');
-      } else {
-        const pdfFile = process.argv[2];
-        const port = +process.env.PORT || 8080;
-        launchDaemon(pdfFile, port);
-      }
-      break;
-    default:
-      console.log(`Usage: To start a web server, run:
-    mobile-pdf-monitor <path-to-pdf> [<port:8080>]
+const showUsage = () => {
+  console.log(`Usage: To start a web server, run:
+    pdfmon start <path-to-pdf>
   Note that the web server forks and runs in background.
 To trigger reload, run:
-    mobile-pdf-monitor reload
+    pdfmon reload
 To quit daemon, run:
-    mobile-pdf-monitor stop
+    pdfmon stop
+To automatically run latexmk, run:
+    pdfmon latexmk [<options>] <main.tex>
 
 Note that <cwd> is very important for ALL those commands.`);
-      process.exit(1);
+  process.exit(1);
+};
+
+const launchLaTeXmk = (args) => {
+  pid.cleanup(pidFile);
+  const me = quote([process.argv[0], process.argv[1]]);
+  const sub = spawn('latexmk', [
+    '-pvc',
+    '-e',
+    `$pdf_previewer="${me} start %S"`,
+    '-e',
+    '$pdf_update_method=4',
+    '-e',
+    `$pdf_update_command="${me} reload"`,
+    '-pdf',
+    ...args,
+  ], {
+    stdio: 'inherit',
+    detached: false,
+  });
+  const handler = (signal) => {
+    sub.kill(signal);
+  };
+  process.on('SIGINT', handler);
+  process.on('SIGTERM', handler);
+  process.on('SIGQUIT', handler);
+  process.on('SIGABRT', handler);
+  sub.on('exit', () => {
+    sendSignal('SIGTERM');
+  });
+};
+
+module.exports = () => {
+  if (process.argv.length < 3) {
+    showUsage();
+  }
+
+  const [, , verb, ...rest] = process.argv;
+  switch (verb) {
+    case 'start':
+      const [pdfFile, port] = rest;
+      launchDaemon(pdfFile);
+      break;
+    case 'stop':
+      sendSignal('SIGTERM');
+      break;
+    case 'reload':
+      sendSignal('SIGUSR1');
+      break;
+    case 'latexmk':
+      launchLaTeXmk(rest);
+      break;
+    default:
+      showUsage();
   }
   setTimeout(() => {}, 50);
 };
