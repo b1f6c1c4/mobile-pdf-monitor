@@ -434,36 +434,6 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
     <div id="printContainer"></div>
 
     <input type="file" id="fileInput" class="hidden">
-    <script>
-      const socket = new WebSocket(`ws://${window.location.host}/socket`);
-      socket.onmessage = (e) => {
-        const { type, msg } = JSON.parse(e.data);
-        const style = document.getElementById('error-wrapper').style;
-        style.visibility = 'visible';
-        switch (type) {
-          case 'normal':
-            style.color = '#FFF';
-            style.backgroundColor = '#777c';
-            break;
-          case 'warning':
-            style.color = '#ee3';
-            style.backgroundColor = '#666c';
-            break;
-          case 'error':
-            style.color = '#e33';
-            style.backgroundColor = '#000c';
-            break;
-        }
-        document.getElementById('error-overlay').innerText = msg;
-        pdfjsLib.getDocument({
-          url: PDFViewerApplication.url,
-        }).promise.then(doc => {
-          // https://github.com/mozilla/pdf.js/issues/11359#issuecomment-659154737
-          doc._pdfInfo.fingerprint = 'constantFingerprint';
-          PDFViewerApplication.load(doc);
-        });
-      };
-    </script>
     <div id="error-wrapper" style="
         position: fixed;
         left: 0;
@@ -472,9 +442,71 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
         z-index: 1000000;
         color: white;
         padding: 1em;
-    " onclick="this.style.visibility='hidden';">
+        overflow: auto;
+        max-width: 70%;
+        max-height: 80%;
+    " onclick="const s = document.getElementById('error-overlay').style;
+    if (s.display) s.display = ''; else s.display = 'none';">
         <pre id="error-overlay"></pre>
     </div>
+    <script>
+      function connect() {
+        const socket = new WebSocket(`ws://${window.location.host}/socket`);
+        const style = document.getElementById('error-wrapper').style;
+        const pre = document.getElementById('error-overlay');
+        style.visibility = 'visible';
+        style.color = '#e3e';
+        style.backgroundColor = '#000c';
+        pre.innerText = 'Disconnected from server, connecting...';
+        socket.onopen = () => {
+          style.visibility = 'visible';
+          style.color = '#efe';
+          style.backgroundColor = '#777c';
+          pre.innerText = 'Connected';
+        };
+        socket.onclose = (e) => {
+          style.visibility = 'visible';
+          style.color = '#e3e';
+          style.backgroundColor = '#000c';
+          pre.innerText = 'Disconnected from server: ' + e.reason;
+          setTimeout(connect, 1000);
+        };
+        socket.onerror = (err) => {
+          style.visibility = 'visible';
+          style.color = '#3e3';
+          style.backgroundColor = '#000c';
+          pre.innerText = err.message;
+          socket.close();
+        };
+        socket.onmessage = (e) => {
+          const { type, msg } = JSON.parse(e.data);
+          style.visibility = 'visible';
+          switch (type) {
+            case 'normal':
+              style.color = '#FFF';
+              style.backgroundColor = '#777c';
+              break;
+            case 'warning':
+              style.color = '#ee3';
+              style.backgroundColor = '#666c';
+              break;
+            case 'error':
+              style.color = '#e33';
+              style.backgroundColor = '#000c';
+              break;
+          }
+          pre.innerText = msg;
+          pdfjsLib.getDocument({
+            url: PDFViewerApplication.url,
+          }).promise.then(doc => {
+            // https://github.com/mozilla/pdf.js/issues/11359#issuecomment-659154737
+            doc._pdfInfo.fingerprint = 'constantFingerprint';
+            PDFViewerApplication.load(doc);
+          });
+        };
+      }
+      connect();
+    </script>
 
 <!-- Goes into viewer.html just before ending </body> -->
 <script>
