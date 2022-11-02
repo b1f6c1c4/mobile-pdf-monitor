@@ -65,13 +65,13 @@ const wss = new WebSocketServer({
   perMessageDeflate: false,
 });
 
-const broadcast = () => {
-  console.log(`SIGUSR1 received, executing command ${msgExec}`);
+const broadcast = (type) => () => {
+  console.log(`Signal ${type} received, executing command ${msgExec}`);
   const msg = msgExec && shell.exec(msgExec, { silent:true }).stdout;
-  console.log(`SIGUSR1 received, reloading all clients for ${pdfFile}`);
+  console.log(`Signal ${type} received, reloading all clients for ${pdfFile}`);
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send({ msg });
+      client.send(JSON.stringify({ type, msg }));
     }
   });
 };
@@ -80,7 +80,10 @@ const exiting = (code) => {
   process.exit(128 + code);
 };
 
-process.on('SIGUSR1', broadcast);
+console.log('Registering signals');
+process.on('SIGUSR1', broadcast('normal'));
+process.on('SIGUSR2', broadcast('warning'));
+process.on('SIGSTKFLT', broadcast('error'));
 process.on('SIGINT', exiting);
 process.on('SIGTERM', exiting);
 process.on('exit', () => {

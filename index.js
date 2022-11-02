@@ -24,6 +24,7 @@ const pidFile = '.pdfmon.pid';
 const sendSignal = (signal) => {
   const p = pid.getCurrentPID(pidFile);
   if (p === null) {
+    console.error(`During ${process.argv.join(' ')}:`);
     console.error('Fatal: There is no PID file, please double check CWD:', process.cwd());
     process.exit(2);
   }
@@ -80,11 +81,17 @@ const launchLaTeXmk = (args) => {
   const sub = spawn('latexmk', [
     '-pvc',
     '-e',
-    `$pdf_previewer=${me} start %S "texfot --quiet --ignore '^(Over|Under)full ' --ignore '^This is pdfTeX, Version ' cat %Y/%R.log"`,
+    `$pdf_previewer="${me} start %S \\"texfot --quiet --ignore '^(Over|Under)full ' --ignore '^This is pdfTeX, Version ' --ignore '^Output written on ' cat %R.log\\""`,
     '-e',
     '$pdf_update_method=4',
     '-e',
-    `$pdf_update_command=${me} reload`,
+    '$pdf_update_command=""',
+    '-e',
+    `$success_cmd="${me} reload"`,
+    '-e',
+    `$warning_cmd="${me} reload SIGUSR2"`,
+    '-e',
+    `$failure_cmd="${me} reload SIGSTKFLT"`,
     '-halt-on-error',
     '-file-line-error',
     '-pdf',
@@ -120,7 +127,10 @@ module.exports = () => {
       sendSignal('SIGTERM');
       break;
     case 'reload':
-      sendSignal('SIGUSR1');
+      if (rest[0])
+        sendSignal(rest[0]);
+      else
+        sendSignal('SIGUSR1');
       break;
     case 'latexmk':
       launchLaTeXmk(rest);
