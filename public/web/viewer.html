@@ -437,7 +437,13 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
     <script>
       const socket = new WebSocket(`ws://${window.location.host}/socket`);
       socket.onmessage = (e) => {
-        PDFViewerApplication.open(PDFViewerApplication.url);
+        pdfjsLib.getDocument({
+          url: PDFViewerApplication.url,
+        }).promise.then(doc => {
+          // https://github.com/mozilla/pdf.js/issues/11359#issuecomment-659154737
+          doc._pdfInfo.fingerprint = 'constantFingerprint';
+          PDFViewerApplication.load(doc);
+        });
       };
     </script>
 
