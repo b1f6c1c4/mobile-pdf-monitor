@@ -41,7 +41,7 @@ const sendSignal = (signal) => {
   }
 };
 
-const launchDaemon = (pdfFile) => {
+const launchDaemon = (pdfFile, msgExec) => {
   if (!fs.existsSync(pdfFile)) {
     console.error(`Warning: File ${pdfFile} does not exist`);
   }
@@ -49,6 +49,7 @@ const launchDaemon = (pdfFile) => {
 
   process.env.PDF_FILE = pdfFile;
   process.env.PID_FILE = pidFile;
+  process.env.MSG_EXEC = msgExec;
   const port = +process.env.PORT || 8080;
   process.env.PORT = '' + port;
   fork(path.join(__dirname, 'daemon.js'), [], {
@@ -79,11 +80,13 @@ const launchLaTeXmk = (args) => {
   const sub = spawn('latexmk', [
     '-pvc',
     '-e',
-    `$pdf_previewer="${me} start %S"`,
+    `$pdf_previewer=${me} start %S "texfot --quiet --ignore '^(Over|Under)full ' --ignore '^This is pdfTeX, Version ' cat %Y/%R.log"`,
     '-e',
     '$pdf_update_method=4',
     '-e',
-    `$pdf_update_command="${me} reload"`,
+    `$pdf_update_command=${me} reload`,
+    '-halt-on-error',
+    '-file-line-error',
     '-pdf',
     ...args,
   ], {
@@ -110,8 +113,8 @@ module.exports = () => {
   const [, , verb, ...rest] = process.argv;
   switch (verb) {
     case 'start':
-      const [pdfFile, port] = rest;
-      launchDaemon(pdfFile);
+      const [pdfFile, msgExec] = rest;
+      launchDaemon(pdfFile, msgExec);
       break;
     case 'stop':
       sendSignal('SIGTERM');

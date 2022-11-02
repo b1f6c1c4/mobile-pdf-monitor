@@ -18,11 +18,13 @@ const statik = require('node-static');
 const http = require('node:http');
 const path = require('node:path');
 const WebSocket = require('ws');
+const shell = require('shelljs');
 const { WebSocketServer } = WebSocket;
 const pid = require('./pid');
 
 const pdfFile = process.env.PDF_FILE;
 const port = +process.env.PORT;
+const msgExec = process.env.MSG_EXEC;
 
 pid.writePID(process.env.PID_FILE);
 
@@ -64,10 +66,12 @@ const wss = new WebSocketServer({
 });
 
 const broadcast = () => {
+  console.log(`SIGUSR1 received, executing command ${msgExec}`);
+  const msg = msgExec && shell.exec(msgExec, { silent:true }).stdout;
   console.log(`SIGUSR1 received, reloading all clients for ${pdfFile}`);
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send();
+      client.send({ msg });
     }
   });
 };
