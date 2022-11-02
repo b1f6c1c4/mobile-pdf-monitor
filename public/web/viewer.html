@@ -480,10 +480,11 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
         };
         socket.onmessage = (e) => {
           const { type, msg } = JSON.parse(e.data);
+          pre.innerText = msg;
           style.visibility = 'visible';
           switch (type) {
             case 'normal':
-              style.color = '#FFF';
+              style.color = '#fff';
               style.backgroundColor = '#777c';
               break;
             case 'warning':
@@ -494,8 +495,12 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
               style.color = '#e33';
               style.backgroundColor = '#000c';
               break;
+            case 'compiling':
+              style.color = '#d8d';
+              style.backgroundColor = '#000c';
+              pre.innerText = 'Compiling...';
+              return;
           }
-          pre.innerText = msg;
           pdfjsLib.getDocument({
             url: PDFViewerApplication.url,
           }).promise.then(doc => {

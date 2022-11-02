@@ -66,8 +66,11 @@ const wss = new WebSocketServer({
 });
 
 const broadcast = (type) => () => {
-  console.log(`Signal ${type} received, executing command ${msgExec}`);
-  const msg = msgExec && shell.exec(msgExec, { silent:true }).stdout;
+  let msg = '';
+  if (type !== 'compiling') {
+    console.log(`Signal ${type} received, executing command ${msgExec}`);
+    msg = msgExec && shell.exec(msgExec, { silent:true }).stdout;
+  }
   console.log(`Signal ${type} received, reloading all clients for ${pdfFile}`);
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -84,6 +87,7 @@ console.log('Registering signals');
 process.on('SIGUSR1', broadcast('normal'));
 process.on('SIGUSR2', broadcast('warning'));
 process.on('SIGSTKFLT', broadcast('error'));
+process.on('SIGVTALRM', broadcast('compiling'));
 process.on('SIGINT', exiting);
 process.on('SIGTERM', exiting);
 process.on('exit', () => {
