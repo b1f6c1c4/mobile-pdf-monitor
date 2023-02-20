@@ -482,6 +482,7 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
           const { type, msg } = JSON.parse(e.data);
           pre.innerText = msg;
           style.visibility = 'visible';
+          let title = 'pdfmon';
           switch (type) {
             case 'normal':
               style.color = '#fff';
@@ -490,15 +491,19 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
             case 'warning':
               style.color = '#ee3';
               style.backgroundColor = '#666c';
+              title = 'pdfmon - Warning';
               break;
             case 'error':
               style.color = '#e33';
               style.backgroundColor = '#000c';
+              title = 'pdfmon - Errored';
               break;
             case 'compiling':
               style.color = '#d8d';
               style.backgroundColor = '#000c';
               pre.innerText = 'Compiling...';
+              title = 'pdfmon ...';
+              PDFViewerApplication.setTitle(title);
               return;
           }
           pdfjsLib.getDocument({
@@ -508,6 +513,7 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
             doc._pdfInfo.fingerprint = 'constantFingerprint';
             doc._pdfInfo.fingerprints = ['constantFingerprint'];
             PDFViewerApplication.load(doc);
+            PDFViewerApplication.setTitle(title);
           });
         };
       }
@@ -519,8 +525,8 @@ Modification by b1f6c1c4 <b1f6c1c4@gmail.com>:
     let pinchZoomEnabled = false;
     function enablePinchZoom(pdfViewer) {
         let startX = 0, startY = 0;
-        let initialPinchDistance = 0;        
-        let pinchScale = 1;    
+        let initialPinchDistance = 0;
+        let pinchScale = 1;
         const viewer = document.getElementById("viewer");
         const container = document.getElementById("viewerContainer");
         const reset = () => { startX = startY = initialPinchDistance = 0; pinchScale = 1; };
