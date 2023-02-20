@@ -121,6 +121,8 @@ module.exports = () => {
 
   const [, , verb, ...rest] = process.argv;
   switch (verb) {
+    case 'restart':
+      sendSignal('SIGTERM');
     case 'start':
       const [pdfFile, msgExec] = rest;
       launchDaemon(pdfFile, msgExec);
