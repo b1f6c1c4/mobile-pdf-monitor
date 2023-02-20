@@ -65,6 +65,17 @@ const wss = new WebSocketServer({
   perMessageDeflate: false,
 });
 
+wss.on('connection', (ws) => {
+  ws.on('error', console.error);
+
+  ws.on('message', (data) => {
+    console.log('received: %s', data);
+  });
+
+  const msg = msgExec && shell.exec(msgExec, { silent:true }).stdout;
+  ws.send(JSON.stringify({ type: 'normal', msg }));
+});
+
 const broadcast = (type) => () => {
   let msg = '';
   if (type !== 'compiling') {
